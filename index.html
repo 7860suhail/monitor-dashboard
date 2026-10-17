@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Tracker Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+        }
+        body {
+            background-color: #f4f6f9;
+            color: #333;
+        }
+        /* Top Navigation Header */
+        .top-header {
+            background-color: #3385cc;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .menu-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        /* Sidebar Menu */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -260px;
+            width: 260px;
+            height: 100%;
+            background-color: #ffffff;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+            transition: left 0.3s ease;
+            z-index: 1100;
+            overflow-y: auto;
+        }
+        .sidebar.open {
+            left: 0;
+        }
+        .sidebar-header {
+            background-color: #3385cc;
+            color: white;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 15px 0;
+        }
+        .sidebar-menu li {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            font-size: 15px;
+            color: #444;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .sidebar-menu li:hover, .sidebar-menu li.active {
+            background-color: #e6f2ff;
+            color: #3385cc;
+            font-weight: 500;
+        }
+        .sidebar-menu li i {
+            width: 20px;
+            color: #3385cc;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 1050;
+        }
+        .overlay.active {
+            display: block;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 800px;
+            margin: 15px auto;
+            padding: 0 10px;
+        }
+
+        /* Tabs Header */
+        .tabs-header {
+            display: flex;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: white;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 15px;
+            font-weight: 500;
+            color: #555;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .tab-btn.active {
+            border-bottom-color: #d9534f;
+            color: #d9534f;
+        }
+        .tab-btn i {
+            color: #d9534f;
+        }
+
+        /* Tab Content Sections */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Card Style */
+        .card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .title-location { color: #5bc0de; }
+        .title-recover { color: #428bca; }
+        .title-audio { color: #d9534f; }
+        .title-vibrate { color: #8a6de9; }
+        .title-message { color: #428bca; }
+        .title-sms { color: #d9534f; }
+        .title-contacts { color: #f0ad4e; }
+        .title-icon-menu { color: #f0ad4e; }
+        .title-sim { color: #d9534f; }
+        .title-screenshot { color: #5bc0de; }
+        .title-camera { color: #f39c12; }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 12px;
+        }
+        select, input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: #fff;
+            color: #333;
+            outline: none;
+        }
+        select:focus, input:focus, textarea:focus {
+            border-color: #3385cc;
+        }
+        
+        /* Action Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-gray { background-color: #7f8c8d; }
+        .btn-red { background-color: #d9534f; }
+        .btn-blue { background-color: #428bca; }
+        .btn-purple { background-color: #8a6de9; }
+        .btn-green { background-color: #4cae4c; }
+        .btn-yellow { background-color: #f0ad4e; color: #fff; }
+        .btn-teal { background-color: #5bc0de; }
+        .btn-orange { background-color: #f39c12; }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Live View Specific UI */
+        .live-options-grid {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .live-option-box {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            flex: 1;
+            cursor: pointer;
+            position: relative;
+            background: #fff;
+        }
+        .live-option-box.selected {
+            border-color: #3385cc;
+            background-color: #f9fbff;
+        }
+        .live-option-box i.fa-check-circle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #3385cc;
+            font-size: 18px;
+        }
+        .live-option-box i.main-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .live-option-box.video-box i.main-icon { color: #d9534f; }
+        .live-option-box.audio-box i.main-icon { color: #8a6de9; }
+        .live-option-box.screen-box i.main-icon { color: #e67e22; }
+
+        .switch-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            max-width: 180px;
+            cursor: pointer;
+        }
+        .switch-btn {
+            background-color: #3385cc;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        /* Results & Tables */
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-bottom: 15px;
+        }
+        th, td {
+            padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            text-align: left;
+            font-size: 13px;
+        }
+        th {
+            background-color: #f9f9f9;
+            font-weight: 500;
+            color: #555;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: white;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .badge-blue { background-color: #428bca; }
+        .badge-green { background-color: #5cb85c; }
+        
+        .action-icon-btn {
+            background: #428bca;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-right: 4px;
+        }
+        
+        /* Notification Toast */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 12px;
+            position: fixed;
+            z-index: 2000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 14px;
+        }
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation Header -->
+    <header class="top-header">
+        <div class="header-left">
+            <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+            <span class="header-title" id="pageTitleText">Dashboard Actions</span>
+        </div>
+        <div class="header-right">
+            <i class="fa-solid fa-house" style="cursor:pointer;" onclick="switchMainTab('actions')"></i>
+        </div>
+    </header>
+
+    <!-- Sidebar Menu -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span>Menu Options</span>
+            <button class="sidebar-close" onclick="toggleSidebar()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <ul class="sidebar-menu">
+            <li onclick="loadSection('actions', this)" class="active"><i class="fa-solid fa-list-check"></i> Actions & Dashboard</li>
+            <li onclick="loadSection('live-view', this)"><i class="fa-solid fa-video"></i> Live View</li>
+            <li onclick="loadSection('calls', this)"><i class="fa-solid fa-phone"></i> Calls</li>
+            <li onclick="loadSection('sms', this)"><i class="fa-solid fa-envelope"></i> SMS</li>
+        </ul>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container">
+
+        <!-- SECTION 1: MAIN ACTIONS & RESULTS -->
+        <div id="section-actions" class="main-section">
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="switchMainTab('actions')"><i class="fa-solid fa-list"></i> Actions</button>
+                <button class="tab-btn" onclick="switchMainTab('result')"><i class="fa-solid fa-file-lines"></i> Result</button>
+            </div>
+
+            <!-- Actions Tab Body -->
+            <div id="tab-actions" class="tab-content active">
+                <!-- 1. Location -->
+                <div class="card">
+                    <div class="card-title title-location"><i class="fa-solid fa-map"></i> Location</div>
+                    <button class="btn btn-gray" onclick="executeAction('Get Location', 'Address: 11020 Ballston, USA - VIEW MAP')">Get Location</button>
+                </div>
+
+                <!-- 2. Recover Data -->
+                <div class="card">
+                    <div class="card-title title-recover"><i class="fa-solid fa-comment-sms"></i> Recover Data</div>
+                    <div class="form-group">
+                        <select id="recoverLimit">
+                            <option>15</option>
+                            <option>30</option>
+                            <option>50</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="recoverNum" placeholder="Example: 634 943 748 - (Optional)">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-blue" onclick="executeAction('Recover SMS', 'Retrieved SMS logs successfully')">SMS</button>
+                        <button class="btn btn-blue" onclick="executeAction('Recover Calls', 'Retrieved Call logs successfully')">Calls</button>
+                    </div>
+                </div>
+
+                <!-- 3. Record Audio -->
+                <div class="card">
+                    <div class="card-title title-audio"><i class="fa-solid fa-microphone"></i> Record audio</div>
+                    <div class="form-group">
+                        <select id="audioDuration">
+                            <option>1 minute</option>
+                            <option>5 minutes</option>
+                            <option>10 minutes</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display:flex; gap:15px; align-items:center;">
+                        <label><input type="radio" name="audio_format" value="MP3" checked> MP3</label>
+                        <label><input type="radio" name="audio_format" value="AMR"> AMR</label>
+                        <label><input type="radio" name="audio_format" value="WAV"> WAV</label>
+                    </div>
+                    <button class="btn btn-red" onclick="executeAction('Audio Recording', 'DOWNLOAD TRACK')">Recording</button>
+                </div>
+
+                <!-- 4. Vibrate - Ring -->
+                <div class="card">
+                    <div class="card-title title-vibrate"><i class="fa-solid fa-mobile-screen"></i> Vibrate - Ring</div>
+                    <div class="form-group">
+                        <input type="text" id="vibrateSec" value="5">
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-purple" onclick="executeAction('Vibrate', 'Vibrated for 5 seconds')">Vibrate</button>
+                        <button class="btn btn-purple" onclick="executeAction('Ringing', 'Ring activated successfully')">Ringing</button>
+                    </div>
+                </div>
+
+                <!-- 5. View/Send Message -->
+                <div class="card">
+                    <div class="card-title title-message"><i class="fa-solid fa-paper-plane"></i> View/Send a message to the phone</div>
+                    <div class="form-group">
+                        <input type="text" id="msgTitle" placeholder="Title">
+                    </div>
+                    <div class="form-group">
+                        <textarea id="msgBody" rows="3" placeholder="Message"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label><input type="checkbox" id="msgVoice" checked> Message voice</label>
+                    </div>
+                    <button class="btn btn-blue" onclick="executeAction('Send Message', 'Message sent to target phone')">Send</button>
+                </div>
+
+                <!-- 6. Retrieve Contacts -->
+                <div class="card">
+                    <div class="card-title title-contacts"><i class="fa-solid fa-address-book"></i> Retrieve the list of contacts</div>
+                    <button class="btn btn-yellow" onclick="executeAction('Retrieve Contacts', 'Downloaded Contacts List (142 contacts)')">Retrieve Contacts</button>
+                </div>
+
+                <!-- 7. Hide/Show Icon -->
+                <div class="card">
+                    <div class="card-title title-icon-menu"><i class="fa-solid fa-pen-to-square"></i> Hide/Show the application icon in the menu</div>
+                    <div class="btn-group">
+                        <button class="btn btn-yellow" onclick="executeAction('Hide Icon', 'Application icon hidden successfully')">Hide Icon</button>
+                        <button class="btn btn-yellow" onclick="executeAction('Show Icon', 'Application icon shown in menu')">Show Icon</button>
+                    </div>
+                </div>
+
+                <!-- 8. SIM Card / Phone Data -->
+                <div class="card">
+                    <div class="card-title title-sim"><i class="fa-solid fa-sim-card"></i> Information on the SIM card / Delete all phone data</div>
+                    <div class="btn-group">
+                        <button class="btn btn-red" onclick="executeAction('SIM Info', 'Carrier: Airtel, MCC: 404, MNC: 45')">Get Informations</button>
+                        <button class="btn btn-red" onclick="if(confirm('Are you sure you want to format the phone?')) executeAction('Format Phone', 'Phone data wiped successfully')">Format the phone</button>
+                    </div>
+                </div>
+
+                <!-- 9. Screenshot -->
+                <div class="card">
+                    <div class="card-title title-screenshot"><i class="fa-solid fa-desktop"></i> Screenshot</div>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 10px;">If the screenshot permission is disabled, a message will be displayed in the foreground to ask the user for permission to take screenshots of his phone.</p>
+                    <button class="btn btn-teal" onclick="executeAction('Screenshot', 'SEE THE SCREENSHOT')">Take a Screenshot</button>
+                </div>
+
+                <!-- 10. Camera -->
+                <div class="card">
+                    <div class="card-title title-camera"><i class="fa-solid fa-camera"></i> Camera</div>
+                    <div class="btn-group">
+                        <button class="btn btn-orange" onclick="executeAction('Enable Camera', 'Camera enabled successfully')">Enable Camera</button>
+                        <button class="btn btn-orange" onclick="executeAction('Disable Camera', 'Camera disabled successfully')">Disable Camera</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Tab Body -->
+            <div id="tab-result" class="tab-content">
+                <div class="table-controls">
+                    <select style="width: 80px;">
+                        <option>10</option>
+                        <option>25</option>
+                    </select>
+                    <input type="text" id="searchResult" placeholder="Search" onkeyup="filterTable()" style="max-width: 200px;">
+                </div>
+                <div class="table-responsive">
+                    <table id="resultTable">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox"></th>
+                                <th>Action</th>
+                                <th>Date</th>
+                                <th>Etat</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultTableBody">
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>Take Picture</td>
+                                <td>2019/04/03 11:17:36</td>
+                                <td><span class="badge badge-blue"><i class="fa-solid fa-check"></i></span></td>
+                                <td><button class="btn btn-purple" style="padding:4px 8px; font-size:11px;" onclick="showToast('Opening picture preview...')">See the picture</button></td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>Audio recording</td>
+                                <td>2019/04/03 11:16:45</td>
+                                <td><span class="badge badge-blue"><i class="fa-solid fa-check"></i></span></td>
+                                <td><button class="btn btn-red" style="padding:4px 8px; font-size:11px;" onclick="showToast('Downloading audio track...')">Download track</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: LIVE VIEW -->
+        <div id="section-live-view" class="main-section" style="display:none;">
+            <div class="card">
+                <div class="live-options-grid">
+                    <div class="live-option-box video-box selected" onclick="selectLiveMode(this)">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <i class="fa-solid fa-video main-icon"></i>
+                        <div style="font-weight:500;">VIDEO</div>
+                    </div>
+                    <div class="live-option-box audio-box" onclick="selectLiveMode(this)">
+                        <i class="fa-solid fa-circle" style="color:#ccc;"></i>
+                        <i class="fa-solid fa-file-audio main-icon"></i>
+                        <div style="font-weight:500;">AUDIO</div>
+                    </div>
+                    <div class="live-option-box screen-box" onclick="selectLiveMode(this)">
+                        <i class="fa-solid fa-circle" style="color:#ccc;"></i>
+                        <i class="fa-solid fa-desktop main-icon"></i>
+                        <div style="font-weight:500;">SCREEN</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <select id="cameraSelect">
+                        <option>Rear camera</option>
+                        <option>Front camera</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select id="soundSelect">
+                        <option>No sound</option>
+                        <option>With sound</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select id="sessionSelect">
+                        <option>5 minutes (5 sessions)</option>
+                        <option>10 minutes</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 14px;">Record</span>
+                    <div class="switch-container" onclick="toggleRecordSwitch()">
+                        <span class="switch-btn" id="recordSwitchState">ON</span>
+                        <div id="switchIndicator" style="width:20px; height:10px; background:#428bca; border-radius:5px;"></div>
+                    </div>
+                </div>
+                <button class="btn btn-blue" style="width: 100%; margin-top: 10px;" onclick="startLiveStream()"><i class="fa-solid fa-play"></i> Start</button>
+            </div>
+        </div>
+
+        <!-- SECTION 3: CALLS -->
+        <div id="section-calls" class="main-section" style="display:none;">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3 style="color:#428bca; font-size:16px;"><i class="fa-solid fa-phone"></i> Calls</h3>
+                    <i class="fa-solid fa-circle-info" style="color:#428bca; font-size:18px; cursor:pointer;" onclick="showToast('Showing all call logs')"></i>
+                </div>
+                <div class="table-controls">
+                    <select style="width: 80px;"><option>10</option></select>
+                    <input type="text" placeholder="Search Calls" style="max-width: 200px;">
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox"></th>
+                                <th>Type</th>
+                                <th>Name</th>
+                                <th>Number</th>
+                                <th>Duration</th>
+                                <th>Date</th>
+                                <th>Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td><span class="badge badge-blue">INCOMING</span></td>
+                                <td>Samantha</td>
+                                <td>0756985459</td>
+                                <td>3 minutes 57 secondes</td>
+                                <td>2019/03/28 19:19:27</td>
+                                <td>Chicago, Illinois, Etats-Unis <br><button class="action-icon-btn" style="margin-top:4px;" onclick="showToast('Opening map location...')"><i class="fa-solid fa-map"></i></button></td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td><span class="badge badge-green">OUTGOING</span></td>
+                                <td>Mam</td>
+                                <td>0325744722</td>
+                                <td>05 minute 02 seconde</td>
+                                <td>2019/03/28 14:00:29</td>
+                                <td>Chicago, Illinois, Etats-Unis <br><button class="action-icon-btn" style="margin-top:4px;" onclick="showToast('Opening map location...')"><i class="fa-solid fa-map"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 4: SMS -->
+        <div id="section-sms" class="main-section" style="display:none;">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3 style="color:#428bca; font-size:16px;"><i class="fa-solid fa-envelope"></i> SMS</h3>
+                </div>
+                <div class="table-controls">
+                    <select style="width: 80px;"><option>10</option></select>
+                    <input type="text" placeholder="Search SMS" style="max-width: 200px;">
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox"></th>
+                                <th>Type</th>
+                                <th>Name</th>
+                                <th>Message</th>
+                                <th>Number</th>
+                                <th>Date</th>
+                                <th>Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td><span class="badge badge-green">OUTGOING</span></td>
+                                <td>Samantha</td>
+                                <td>Hello, how are you doing ? Are you coming tonight ?</td>
+                                <td>0656160387</td>
+                                <td>2019/03/25 15:46:15</td>
+                                <td>Chicago, Illinois <br><button class="action-icon-btn" style="margin-top:4px;" onclick="showToast('Opening map location...')"><i class="fa-solid fa-map"></i></button></td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td><span class="badge badge-blue">INCOMING</span></td>
+                                <td>Samantha</td>
+                                <td>Hello John :)</td>
+                                <td>0656160387</td>
+                                <td>2019/03/25 15:45:02</td>
+                                <td>Chicago, Illinois <br><button class="action-icon-btn" style="margin-top:4px;" onclick="showToast('Opening map location...')"><i class="fa-solid fa-map"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast">Action executed successfully!</div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+
+        function loadSection(sectionName, element) {
+            const sections = document.querySelectorAll('.main-section');
+            sections.forEach(sec => sec.style.display = 'none');
+
+            document.getElementById('section-' + sectionName).style.display = 'block';
+
+            const titles = {
+                'actions': 'Dashboard Actions',
+                'live-view': 'Live View',
+                'calls': 'Calls History',
+                'sms': 'SMS Messages'
+            };
+            document.getElementById('pageTitleText').innerText = titles[sectionName];
+
+            const menuItems = document.querySelectorAll('.sidebar-menu li');
+            menuItems.forEach(item => item.classList.remove('active'));
+            if(element) element.classList.add('active');
+
+            toggleSidebar();
+        }
+
+        function switchMainTab(tabName) {
+            document.getElementById('section-actions').style.display = 'block';
+            document.getElementById('tab-actions').classList.remove('active');
+            document.getElementById('tab-result').classList.remove('active');
+            
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => btn.classList.remove('active'));
+
+            if(tabName === 'actions') {
+                document.getElementById('tab-actions').classList.add('active');
+                tabBtns[0].classList.add('active');
+            } else {
+                document.getElementById('tab-result').classList.add('active');
+                tabBtns[1].classList.add('active');
+            }
+        }
+
+        // Working feature: Execute Action and add row to Results table automatically
+        function executeAction(actionName, dataDetails) {
+            showToast(actionName + ' requested successfully!');
+
+            const tbody = document.getElementById('resultTableBody');
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '/') + ' ' + now.toTimeString().slice(0, 8);
+
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><input type="checkbox"></td>
+                <td>${actionName}</td>
+                <td>${dateStr}</td>
+                <td><span class="badge badge-blue"><i class="fa-solid fa-check"></i></span></td>
+                <td><button class="btn btn-purple" style="padding:4px 8px; font-size:11px;" onclick="showToast('Data: ${dataDetails}')">View Data</button></td>
+            `;
+            tbody.insertBefore(newRow, tbody.firstChild);
+        }
+
+        // Live View Mode Selection
+        function selectLiveMode(boxElement) {
+            const boxes = document.querySelectorAll('.live-option-box');
+            boxes.forEach(b => {
+                b.classList.remove('selected');
+                b.querySelector('i:first-child').className = "fa-solid fa-circle";
+                b.querySelector('i:first-child').style.color = "#ccc";
+            });
+            boxElement.classList.add('selected');
+            const checkIcon = boxElement.querySelector('i:first-child');
+            checkIcon.className = "fa-solid fa-check-circle";
+            checkIcon.style.color = "#3385cc";
+            showToast('Selected mode: ' + boxElement.querySelector('div').innerText);
+        }
+
+        // Record Switch Toggle
+        function toggleRecordSwitch() {
+            const stateSpan = document.getElementById('recordSwitchState');
+            if(stateSpan.innerText === 'ON') {
+                stateSpan.innerText = 'OFF';
+                stateSpan.style.backgroundColor = '#7f8c8d';
+            } else {
+                stateSpan.innerText = 'ON';
+                stateSpan.style.backgroundColor = '#3385cc';
+            }
+        }
+
+        function startLiveStream() {
+            showToast('Live stream session started successfully!');
+        }
+
+        // Toast notification helper
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.className = 'show';
+            setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+        }
+
+        // Search filter for result table
+        function filterTable() {
+            const input = document.getElementById('searchResult').value.toLowerCase();
+            const rows = document.querySelectorAll('#resultTableBody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>
